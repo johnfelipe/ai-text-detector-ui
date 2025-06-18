@@ -13,18 +13,25 @@ st.set_page_config(
 )
 
 # Force light theme
-st.markdown("""
+st.markdown(
+    """
 <script>
     const stApp = window.parent.document.querySelector('.stApp');
     if (stApp) {
         stApp.style.backgroundColor = '#ffffff';
     }
 </script>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # Get API URLs from environment variables (for Docker) or use RunPod defaults
-API_URL = os.getenv("API_URL", "https://9l4pjnll4k9miw-8000.proxy.runpod.net/api/v1/predict")
-FEEDBACK_URL = os.getenv("FEEDBACK_URL", "https://9l4pjnll4k9miw-8000.proxy.runpod.net/api/v1/feedback")
+API_URL = os.getenv(
+    "API_URL", "https://9l4pjnll4k9miw-8000.proxy.runpod.net/api/v1/predict"
+)
+FEEDBACK_URL = os.getenv(
+    "FEEDBACK_URL", "https://9l4pjnll4k9miw-8000.proxy.runpod.net/api/v1/feedback"
+)
 
 # Custom CSS for GPTZero-like styling with light theme override
 st.markdown(
@@ -480,17 +487,48 @@ if st.session_state.analysis_result is not None:
     <div class="result-card" style="background: linear-gradient(135deg, {result_color} 0%, {result_color}aa 100%);">
         <h2>{result_emoji} {result_text}</h2>
         <h1 style="margin: 0.5rem 0; font-size: 3rem;">{overall_prob:.1%}</h1>
-        <p style="margin: 0; opacity: 0.9;">Overall AI Probability</p>
+        <p style="margin: 0; opacity: 0.9;">Overall AI Probability (API)</p>
     </div>
     """,
         unsafe_allow_html=True,
     )
 
+    # Add comparison between API probability and sentence-count-based probability
+    if "sentence_level_results" in result and result["sentence_level_results"]:
+        sentences_data = result["sentence_level_results"]
+        total_sentences = len(sentences_data)
+        ai_sentences = sum(1 for s in sentences_data if s["is_ai"])
+        sentence_based_prob = (
+            ai_sentences / total_sentences if total_sentences > 0 else 0
+        )
+
+        # Show comparison only if there's a significant difference
+        prob_difference = abs(overall_prob - sentence_based_prob)
+        if prob_difference > 0.1:  # Show if difference is more than 10%
+            comparison_color = "#f39c12" if prob_difference > 0.2 else "#3498db"
+            st.markdown(
+                f"""
+            <div style="background: {comparison_color}22; padding: 1rem; border-radius: 10px; margin: 1rem 0; border-left: 4px solid {comparison_color};">
+                <h4 style="color: {comparison_color}; margin: 0 0 0.5rem 0;">📊 Probability Comparison</h4>
+                <p style="margin: 0; color: #262730;">
+                    <strong>API-based probability:</strong> {overall_prob:.1%} | 
+                    <strong>Sentence-count-based probability:</strong> {sentence_based_prob:.1%} | 
+                    <strong>Difference:</strong> {prob_difference:.1%}
+                </p>
+                <p style="margin: 0.5rem 0 0 0; color: #666; font-size: 0.9rem;">
+                    {"🔍 Significant difference detected - consider reviewing individual sentence classifications." if prob_difference > 0.2 else "ℹ️ Moderate difference between calculation methods."}
+                </p>
+            </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
     # Metrics row
     if "sentence_level_results" in result and result["sentence_level_results"]:
         sentences_data = result["sentence_level_results"]
 
-        col1, col2, col3, col4 = st.columns(4)
+        # Create 5 columns for the metrics
+        col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:
             total_sentences = len(sentences_data)
@@ -529,6 +567,21 @@ if st.session_state.analysis_result is not None:
             )
 
         with col4:
+            # Calculate AI probability based on sentence count (new metric)
+            sentence_based_ai_prob = (
+                ai_sentences / total_sentences if total_sentences > 0 else 0
+            )
+            st.markdown(
+                f"""
+            <div class="metric-card">
+                <h3 style="color: #f39c12; margin: 0;">{sentence_based_ai_prob:.1%}</h3>
+                <p style="margin: 0; color: #7f8c8d;">AI Prob. (Sentence Count)</p>
+            </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
+        with col5:
             avg_prob = sum(s["ai_probability"] for s in sentences_data) / len(
                 sentences_data
             )
