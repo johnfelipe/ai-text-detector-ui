@@ -133,7 +133,6 @@ In today's rapidly evolving technological landscape, artificial intelligence rep
 
 ## 🔗 Related Links
 
-- **API Documentation**: https://your-pod.proxy.runpod.net/docs
 - **RunPod Platform**: https://runpod.io
 - **Streamlit Framework**: https://streamlit.io
 
