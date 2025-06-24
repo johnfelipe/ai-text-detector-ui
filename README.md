@@ -1,6 +1,6 @@
 # 🤖 AI Text Detector - Web Interface
 
-A beautiful, modern web interface for AI text detection powered by RunPod GPU infrastructure.
+Some basic UI for testing AI Text Detector functionality
 
 ## 🚀 Live Demo
 
