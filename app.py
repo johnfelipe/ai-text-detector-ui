@@ -27,10 +27,10 @@ st.markdown(
 
 # Get API URLs from environment variables (for Docker) or use RunPod defaults
 API_URL = os.getenv(
-    "API_URL", "https://9l4pjnll4k9miw-8000.proxy.runpod.net/api/v1/predict"
+    "API_URL", "https://localhost:8000/api/v1/predict"
 )
 FEEDBACK_URL = os.getenv(
-    "FEEDBACK_URL", "https://9l4pjnll4k9miw-8000.proxy.runpod.net/api/v1/feedback"
+    "FEEDBACK_URL", "https://localhost:8000/api/v1/feedback"
 )
 
 # Custom CSS for GPTZero-like styling with light theme override
@@ -213,11 +213,11 @@ with col2:
 
 def get_highlight_color(probability):
     """Get background color based on AI probability."""
-    if probability >= 0.7:
+    if probability >= 0.75:
         return "#ffebee", "#c62828"  # Red background, dark red text
     elif probability >= 0.5:
         return "#fff3e0", "#ef6c00"  # Orange background, dark orange text
-    elif probability >= 0.3:
+    elif probability >= 0.25:
         return "#fffde7", "#f57f17"  # Yellow background, dark yellow text
     else:
         return "#e8f5e8", "#2e7d32"  # Green background, dark green text
@@ -262,11 +262,11 @@ def create_probability_chart(sentences_data):
     # Color mapping
     colors = []
     for prob in probabilities:
-        if prob >= 0.7:
+        if prob >= 0.75:
             colors.append("#e74c3c")
         elif prob >= 0.5:
             colors.append("#f39c12")
-        elif prob >= 0.3:
+        elif prob >= 0.25:
             colors.append("#f1c40f")
         else:
             colors.append("#27ae60")
@@ -470,8 +470,10 @@ if st.session_state.analysis_result is not None:
     # Overall result card
     st.markdown("---")
 
-    overall_prob = result["ai_probability"]
-    is_ai = result["is_ai"]
+    overall_prob = result.get("ai_probability", 0)
+    is_ai = result.get("is_ai", False)
+    is_humanized = result.get("is_humanized", False)
+    humanizer_prob = result.get("humanizer_probability", 0)
 
     if is_ai:
         result_emoji = "🤖"
@@ -527,8 +529,8 @@ if st.session_state.analysis_result is not None:
     if "sentence_level_results" in result and result["sentence_level_results"]:
         sentences_data = result["sentence_level_results"]
 
-        # Create 5 columns for the metrics
-        col1, col2, col3, col4, col5 = st.columns(5)
+        # Create 6 columns for the metrics
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
 
         with col1:
             total_sentences = len(sentences_data)
@@ -590,6 +592,18 @@ if st.session_state.analysis_result is not None:
             <div class="metric-card">
                 <h3 style="color: #9b59b6; margin: 0;">{avg_prob:.1%}</h3>
                 <p style="margin: 0; color: #7f8c8d;">Avg. AI Probability</p>
+            </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
+        with col6:
+            humanizer_res = "Yes" if is_humanized else "No" + (f" ({humanizer_prob:.1%})" if is_humanized else "")
+            st.markdown(
+                f"""
+            <div class="metric-card">
+                <h3 style="color: #9b59b6; margin: 0;">{humanizer_res}</h3>
+                <p style="margin: 0; color: #7f8c8d;">Humanizer Applied</p>
             </div>
             """,
                 unsafe_allow_html=True,
